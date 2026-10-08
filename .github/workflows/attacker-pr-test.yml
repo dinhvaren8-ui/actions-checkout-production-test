@@ -22,3 +22,38 @@ jobs:
           echo "BASE_REPO_ID=${{ github.event.pull_request.base.repo.id }}"
           echo "BASE_REPO_FULL_NAME=${{ github.event.pull_request.base.repo.full_name }}"
           echo "HEAD_REPO_JSON=${{ toJSON(github.event.pull_request.head.repo) }}"
+
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record event metadata for the guard probe
+        run: |
+          echo "PROBE_EVENT_NAME=${{ github.event_name }}"
+          echo "PROBE_PR_NUMBER=${{ github.event.pull_request.number }}"
+          echo "PROBE_HEAD_REPO_JSON=${{ toJSON(github.event.pull_request.head.repo) }}"
+
+      - name: Probe the pull request ref in the base repository
+        env:
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          echo "PROBE_REF=refs/pull/${{ github.event.pull_request.number }}/head"
+          echo "PROBE_BASE_REPO=${{ github.repository }}"
+          git ls-remote "https://github.com/${{ github.repository }}" "refs/pull/${{ github.event.pull_request.number }}/head" || true
+
+      - name: actions/checkout v7 with a pull request ref
+        id: checkout
+        uses: actions/checkout@v7
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/head
+          persist-credentials: false
+
+      - name: Inspect the workspace after checkout (no execution)
+        if: always()
+        run: |
+          echo "CHECKOUT_OUTCOME=${{ steps.checkout.outcome }}"
+          echo "WORKSPACE_HEAD=$(git -C . rev-parse HEAD 2>/dev/null || echo none)"
+          echo "FORK_MARKER_PRESENT=$(test -f FORK_CODE.txt && echo YES || echo NO)"
+          echo "BASE_MARKER_PRESENT=$(test -f BASE_CODE.txt && echo YES || echo NO)"
+          echo "WORKSPACE_LISTING_BEGIN"
+          ls -a1 2>/dev/null || true
+          echo "WORKSPACE_LISTING_END"
