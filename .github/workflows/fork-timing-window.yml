@@ -1,0 +1,38 @@
+name: Fork Timing Window
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  window:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Record metadata at window start
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REPO_JSON: ${{ toJSON(github.event.pull_request.head.repo) }}
+        run: |
+          echo "WINDOW_EVENT_NAME=${{ github.event_name }}"
+          echo "WINDOW_ACTION=${{ github.event.action }}"
+          echo "WINDOW_PR_NUMBER=$PR_NUMBER"
+          echo "WINDOW_HEAD_SHA=$HEAD_SHA"
+          echo "WINDOW_RUN_ID=${{ github.run_id }}"
+          echo "WINDOW_HEAD_REPO_JSON_BEGIN"
+          echo "$HEAD_REPO_JSON"
+          echo "WINDOW_HEAD_REPO_JSON_END"
+          echo "WINDOW_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Hold the run open
+        run: sleep 420
+
+      - name: Record metadata at window end
+        if: always()
+        run: |
+          echo "WINDOW_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "WINDOW_SURVIVED=YES"
