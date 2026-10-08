@@ -1,0 +1,24 @@
+name: Attacker PR Test
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record pull request event metadata
+        run: |
+          echo "EVENT_NAME=${{ github.event_name }}"
+          echo "PR_ACTION=${{ github.event.action }}"
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}"
+          echo "HEAD_SHA=${{ github.event.pull_request.head.sha }}"
+          echo "HEAD_REPO_ID=${{ github.event.pull_request.head.repo.id }}"
+          echo "HEAD_REPO_FULL_NAME=${{ github.event.pull_request.head.repo.full_name }}"
+          echo "BASE_REPO_ID=${{ github.event.pull_request.base.repo.id }}"
+          echo "BASE_REPO_FULL_NAME=${{ github.event.pull_request.base.repo.full_name }}"
+          echo "HEAD_REPO_JSON=${{ toJSON(github.event.pull_request.head.repo) }}"
